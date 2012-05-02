@@ -63,7 +63,7 @@ public class MergeMojo
         try {
             getLog().info("Merging Packages");
 
-            boolean skip = isEmpty(System.getenv("SKIP_APT_MERGE"));
+            boolean skip = !isEmpty(System.getenv("SKIP_APT_MERGE"));
 
             PackageList base = skip ? new PackageList() : loadPackages(new GZIPInputStream(new URL(repository, "Packages.gz").openStream()));
 
