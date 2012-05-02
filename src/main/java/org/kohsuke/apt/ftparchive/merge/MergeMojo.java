@@ -62,7 +62,10 @@ public class MergeMojo
     public void execute() throws MojoExecutionException {
         try {
             getLog().info("Merging Packages");
-            PackageList base = loadPackages(new GZIPInputStream(new URL(repository,"Packages.gz").openStream()));
+
+            boolean skip = isEmpty(System.getenv("SKIP_APT_MERGE"));
+
+            PackageList base = skip ? new PackageList() : loadPackages(new GZIPInputStream(new URL(repository, "Packages.gz").openStream()));
 
             PackageList updated = loadPackages(new FileInputStream(new File("Packages")));
 
@@ -84,19 +87,21 @@ public class MergeMojo
 
                 // copy remote Contents.gz to the output while leaving out our local overwrites
                 PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(output,"Contents")),"UTF-8"));
-                BufferedReader in = new BufferedReader(new InputStreamReader(new GZIPInputStream(new URL(repository,"Contents.gz").openStream()),"UTF-8"));
                 String line;
-                while ((line=in.readLine())!=null) {
-                    int idx = Math.max(line.lastIndexOf('\t'),line.lastIndexOf(' '));
-                    String name = line.substring(idx+1);
-                    if (localPackageNames.contains(name))
-                        continue;   // skip as we'll overwrite this
-                    out.println(line);
+                if (!skip) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(new GZIPInputStream(new URL(repository,"Contents.gz").openStream()),"UTF-8"));
+                    while ((line=in.readLine())!=null) {
+                        int idx = Math.max(line.lastIndexOf('\t'),line.lastIndexOf(' '));
+                        String name = line.substring(idx+1);
+                        if (localPackageNames.contains(name))
+                            continue;   // skip as we'll overwrite this
+                        out.println(line);
+                    }
+                    in.close();
                 }
-                in.close();
                 
                 // now stream through our local overwrites
-                in = new BufferedReader(new InputStreamReader(new FileInputStream("Contents"),"UTF-8"));
+                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream("Contents"),"UTF-8"));
                 while ((line=in.readLine())!=null) {
                     out.println(line);
                 }
@@ -107,6 +112,10 @@ public class MergeMojo
             throw new MojoExecutionException("Failed to merge",e);
         }
 
+    }
+
+    private boolean isEmpty(String s) {
+        return s==null || s.trim().length()==0;
     }
 
     private PackageList loadPackages(InputStream in) throws IOException {
