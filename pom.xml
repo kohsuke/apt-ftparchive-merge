@@ -8,7 +8,7 @@
 
   <artifactId>apt-ftparchive-merge</artifactId>
   <packaging>maven-plugin</packaging>
-  <version>1.2</version>
+  <version>1.3-SNAPSHOT</version>
   <name>apt-ftparchive-merge Maven plugin</name>
 
   <dependencies>
