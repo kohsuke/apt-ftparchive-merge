@@ -22,6 +22,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -58,14 +59,22 @@ public class MergeMojo
      * @required
      */
     private File output;
-    
+
     public void execute() throws MojoExecutionException {
         try {
             getLog().info("Merging Packages");
 
             boolean skip = !isEmpty(System.getenv("SKIP_APT_MERGE"));
 
-            PackageList base = skip ? new PackageList() : loadPackages(new GZIPInputStream(new URL(repository, "Packages.gz").openStream()));
+            PackageList base = new PackageList();
+
+            URL exitingUrl = new URL(repository, "Packages.gz");
+            try {
+                if (!skip)
+                    base = loadPackages(new GZIPInputStream(exitingUrl.openStream()));
+            } catch (FileNotFoundException e) {
+                getLog().warn("Failed to load existing packages from "+exitingUrl,e);
+            }
 
             PackageList updated = loadPackages(new FileInputStream(new File("Packages")));
 
@@ -120,12 +129,12 @@ public class MergeMojo
 
     private PackageList loadPackages(InputStream in) throws IOException {
         try {
-            BufferedReader r = new BufferedReader(new InputStreamReader(in,"UTF-8"));
+            BufferedReader r = new BufferedReader(new InputStreamReader(in, "UTF-8"));
             PackageList packages = new PackageList();
             String line;
             List<String> read = new ArrayList<String>();
-            while ((line=r.readLine())!=null) {
-                if (line.length()==0) {
+            while ((line = r.readLine()) != null) {
+                if (line.length() == 0) {
                     packages.add(new PackageDef(read));
                     read = new ArrayList<String>();
                 } else {
