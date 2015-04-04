@@ -73,7 +73,7 @@ public class MergeMojo
                 if (!skip)
                     base = loadPackages(new GZIPInputStream(exitingUrl.openStream()));
             } catch (FileNotFoundException e) {
-                getLog().warn("Failed to load existing packages from "+exitingUrl,e);
+                getLog().warn("Failed to load existing packages from " + exitingUrl, e);
             }
 
             PackageList updated = loadPackages(new FileInputStream(new File("Packages")));
@@ -96,19 +96,24 @@ public class MergeMojo
 
                 // copy remote Contents.gz to the output while leaving out our local overwrites
                 PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(output,"Contents")),"UTF-8"));
+                exitingUrl = new URL(repository, "Contents.gz");
                 String line;
-                if (!skip) {
-                    BufferedReader in = new BufferedReader(new InputStreamReader(new GZIPInputStream(new URL(repository,"Contents.gz").openStream()),"UTF-8"));
-                    while ((line=in.readLine())!=null) {
-                        int idx = Math.max(line.lastIndexOf('\t'),line.lastIndexOf(' '));
-                        String name = line.substring(idx+1);
-                        if (localPackageNames.contains(name))
-                            continue;   // skip as we'll overwrite this
-                        out.println(line);
+                try {
+                    if (!skip) {
+                        BufferedReader in = new BufferedReader(new InputStreamReader(new GZIPInputStream(exitingUrl.openStream()),"UTF-8"));
+                        while ((line=in.readLine())!=null) {
+                            int idx = Math.max(line.lastIndexOf('\t'),line.lastIndexOf(' '));
+                            String name = line.substring(idx+1);
+                            if (localPackageNames.contains(name))
+                                continue;   // skip as we'll overwrite this
+                            out.println(line);
+                        }
+                        in.close();
                     }
-                    in.close();
+                } catch (FileNotFoundException e) {
+                    getLog().warn("Failed to load existing contents from " + exitingUrl, e);
                 }
-                
+
                 // now stream through our local overwrites
                 BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream("Contents"),"UTF-8"));
                 while ((line=in.readLine())!=null) {
