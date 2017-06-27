@@ -78,7 +78,11 @@ public class MergeMojo
 
             PackageList updated = loadPackages(new FileInputStream(new File("Packages")));
 
-            base.addAll(updated);
+            for (PackageDef p : updated) {
+                PackageDef old = base.get(p.getName(), p.getVersion());
+                if (old!=null)  base.remove(old);
+                base.add(p);
+            }
             base.sort();
 
             output.mkdirs();

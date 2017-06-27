@@ -20,16 +20,25 @@ public class PackageDef {
     }
     
     public String getName() {
+        return getHeader(PACKAGE_HEADER);
+    }
+
+    public String getVersion() {
+        return getHeader(VERSION_HEADER);
+    }
+
+    private String getHeader(String prefix) {
         for (String line : lines) {
-            if (line.startsWith(PACKAGE_HEADER)) {
-                return line.substring(PACKAGE_HEADER.length());
+            if (line.startsWith(prefix)) {
+                return line.substring(prefix.length());
             }
         }
         
-        throw new AssertionError("No package name found in "+lines);
+        throw new AssertionError("No '"+prefix+"' header found in "+lines);
     }
 
     private static final String PACKAGE_HEADER = "Package: ";
+    private static final String VERSION_HEADER = "Version: ";
 
     public void write(Writer w) throws IOException {
         for (String line : lines) {

@@ -21,6 +21,14 @@ public class PackageList extends ArrayList<PackageDef> {
         return null;
     }
 
+    public PackageDef get(String name, String version) {
+        for (PackageDef p : this) {
+            if (p.getName().equals(name) && p.getVersion().equals(version))
+                return p;
+        }
+        return null;
+    }
+
     public void sort() {
         Collections.sort(this,new Comparator<PackageDef>() {
             public int compare(PackageDef o1, PackageDef o2) {
